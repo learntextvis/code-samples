@@ -1,0 +1,180 @@
+
+<!DOCTYPE html>
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
+
+<style>
+
+body {
+  font-family: Arial;
+}
+
+.barsgroup {
+  margin-left: 20px;
+}
+
+.bars {
+  display: inline-block;
+  position: relative;
+  margin-right: 20px;
+}
+
+.title {
+  display: inline-block;
+  position: relative;
+  padding-left: 150px;
+}
+
+#demtitle {
+  color: steelblue;
+}
+
+#reptitle {
+  color: red;
+  margin-left: 20px;
+}
+
+.clouds {
+  display: inline-block;
+  position: relative;
+  margin-left: 20px;
+}
+
+
+</style>
+
+<body>
+
+  <h2>Word Counts</h2>
+
+  <p>Using the js file utils/wordcount.js and jason davies wordcloud in utils/d3.layout.cloud.js. Draws simple bars with dimple.js.</p>
+
+
+  <div class="titles">
+    <h2 class="title" id="demtitle">Democractic Debate Verbs</h2>
+    <h2 class="title" id="reptitle">Republican Debate Verbs</h2>
+  <div class="cloudsgroup">
+    <div class="clouds" id="wordclouddem"></div>
+    <div class="clouds" id="wordcloudrep"></div>
+  </div>
+  <div class="barsgroup">
+    <div class="bars" id="barsdem"></div>
+    <div class="bars" id="barsrep"></div>
+  </div>
+
+
+<script src="//d3js.org/d3.v3.min.js"></script>
+<script src="http://d3js.org/queue.v1.min.js"></script>
+<script src="http://dimplejs.org/dist/dimple.v2.1.6.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/3.10.1/lodash.js"></script>
+<script src="js/wordcount.js"></script>
+<script src="js/d3.layout.cloud.js"></script>
+
+<script>
+
+var stopwords = ["have", "is", "are", "be", "was", "'re", "'m", "'ve", "'s", "has"];
+
+
+function make_barvis(data, selector, color) {
+
+  var svg = dimple.newSvg(selector, 500, 1000);
+  var myChart = new dimple.chart(svg, data);
+  myChart.setBounds(75, 30, 450, 900);
+  myChart.addMeasureAxis("x", "count");
+  var y = myChart.addCategoryAxis("y", "word");
+  y.addOrderRule("count");  // largest at top
+  myChart.defaultColors = [new dimple.color(color)];
+  myChart.addSeries(null, dimple.plot.bar);
+  myChart.draw();
+}
+
+function make_wordcloud(data, selector, color) {
+
+  // code borrowed from and modified: http://bl.ocks.org/ericcoopey/6382449
+
+  var fontscale = d3.scale.linear()
+    .range([8, 60])
+    .domain(d3.extent(data, function (d) {
+      return d.count;
+    }));
+
+  var layout = d3.layout.cloud()
+    .size([500, 500])
+    .words(data)
+    .rotate(0)
+    .font("Impact")
+    .spiral("rectangular")
+    .text(function(d) {
+      return d.word; })
+    .fontSize(function(d) {
+      return fontscale(d.count); })
+    .on("end", draw);
+
+  function draw(words) {
+    d3.select(selector).append("svg")
+      .attr("width", layout.size()[0])
+      .attr("height", layout.size()[1])
+      .attr("class", "wordcloud")
+      .append("g")
+      // without the transform, words would get cutoff to the left and top, they would
+      // appear outside of the SVG area
+      .append("g")
+      .attr("transform", "translate(" + layout.size()[0] / 2 + "," + layout.size()[1] / 2 + ")")
+      .selectAll("word")
+      .data(words)
+      .enter().append("text")
+      .style("font-size", function(d) {
+        return fontscale(d.count) + "px";
+      })
+      .style("font-family", "Impact")
+      .attr("fill", color)
+      .attr("text-anchor", "middle")
+      .attr("transform", function(d) {
+          return "translate(" + [d.x, d.y] + ")rotate(" + d.rotate + ")";
+      })
+      .text(function(d) {
+          return d.word; });
+  }
+
+  layout.start();
+}
+
+function make_pairs(data) {
+
+  var counts = [];
+  var hist = wordCount(data);
+  var pairs = _.pairs(hist);
+  pairs.forEach(function (pair) {
+    var word = pair[0], count = pair[1];
+
+    if (stopwords.indexOf(word) == -1) {
+      counts.push({ "word" : word,
+                    "count": count
+                    });
+    }
+  });
+  counts.sort(function(a,b) {return b.count - a.count;});
+  return counts;
+}
+
+
+function process(error, data1, data2) {
+
+  if (error) { console.log("error", error); }
+
+  var demdata = make_pairs(data1),
+    repdata = make_pairs(data2);
+
+  make_barvis(demdata.slice(0,150), "#barsdem", "steelblue");  // giant user issue - when to cut it off.
+  make_wordcloud(demdata.slice(0,150), "#wordclouddem", "steelblue");
+  make_barvis(repdata.slice(0,150), "#barsrep", "red");  // giant user issue - when to cut it off.
+  make_wordcloud(repdata.slice(0,150), "#wordcloudrep", "red");
+}
+
+queue()
+  .defer(d3.text, "data/dem_debate_2015_10_13_wapo.txt_lc")
+  .defer(d3.text, "data/gop_debate_2015_9_16_wapo.txt_lc")
+  .await(process);
+
+</script>
+
+</body>
