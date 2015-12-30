@@ -89,8 +89,6 @@ function make_barvis(data, selector, color) {
 
 function make_wordcloud(data, selector, color) {
 
-  // code borrowed from and modified: http://bl.ocks.org/ericcoopey/6382449
-
   var fontscale = d3.scale.linear()
     .range([8, 60])
     .domain(d3.extent(data, function (d) {
