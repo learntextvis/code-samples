@@ -76,6 +76,9 @@ var cloudwidth = 500,
 
 var colors = {dem:"steelblue", rep: "red"};
 
+var fontscale = d3.scale.linear()
+    .range([8, 60]);
+
 
 function init_cloud(selector) {
 
@@ -90,11 +93,6 @@ function init_cloud(selector) {
 function make_wordcloud(data, cloud, colors) {
 
   // scale does not work right for the merge because of the key function.
-  var fontscale = d3.scale.linear()
-    .range([8, 60])
-    .domain(d3.extent(data, function (d) {
-      return d.count;
-    }));
 
   var layout = d3.layout.cloud()
     .size([cloudwidth, cloudheight])
@@ -171,7 +169,10 @@ function process(error, data1, data2) {
   var demdata = make_pairs(data1, "dem"),
     repdata = make_pairs(data2, "rep");
 
-  var combined = data1.slice(0,100).concat(data2.slice(0,100));
+  var combined = demdata.slice(0,150).concat(repdata.slice(0,150));
+  fontscale.domain(d3.extent(combined, function (d) {
+      return d.count;
+    }));
 
   // it's way worse with all of them -- need to provide cutoffs in ui?
   // config settings?  also, stopwords handling.
@@ -182,12 +183,10 @@ function process(error, data1, data2) {
   make_wordcloud(repdata.slice(0,150), cloudrep, colors);
 
   d3.select("#buttonleft").on("click", function() {
-    var newdata = demdata.slice(0,150).concat(repdata.slice(0,150));
-    make_wordcloud(newdata, clouddem, colors);
+    make_wordcloud(combined, clouddem, colors);
   });
   d3.select("#buttonright").on("click", function() {
-    var newdata = demdata.slice(0,150).concat(repdata.slice(0,150));
-    make_wordcloud(newdata, cloudrep, colors);
+    make_wordcloud(combined, cloudrep, colors);
   });
 }
 
