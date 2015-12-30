@@ -2,12 +2,15 @@
 Usage: python preprocess_files.py [original_dir] [new_dir] [part_of_speech]
 
 Examples of Tokenizing, Cleaning, Rewriting with Parts of Speech
-This notebook assumes you installed nltk and pattern already. (@arnicas, Aug 2014)
+This notebook assumes you installed pattern already. (@arnicas, Aug 2014)
+
+TODO (lynn): Try Spacy instead.
+TODO (lynn): This needs linting and pep8ing badly; also decide what to do re unicode
 """
 
 import os
 from pattern.en import tag as ptag
-import ununicode
+#import ununicode
 import string
 import sys
 
@@ -28,27 +31,25 @@ def cleanup(text):
     """ This function cleans up the text a bit, and removes newlines."""
 
     data = text.decode('utf8')
-    data = ununicode.toascii(data)  # a useful function that does some simple unicode replacements
+    #data = ununicode.toascii(data)  # a useful function that does some simple unicode replacements
     data = data.replace('\r', '')  # windows newline in some files
     data = data.replace('\n', ' ')  # turn newline into space
     data = data.strip()  # strip remaining white space chars from edges
     return data
 
 
-def cleanup_and_pos(text, pos='VB'):
+def get_pos(text, pos='VB'):
     """ Run the cleanup function, convert to a list of verbs, clean out misc stuff left."""
 
     other_things_to_strip = []  # put your own list of strings here, based on reading outputs
-
-    data = cleanup(text)
-    verbs = tag_by_line(data, pos)   # returns a list of verbs
-    cleanverbs = [verb for verb in verbs if verb not in string.punctuation]
+    verbs = tag_by_line(text, pos)   # returns a list of verbs
+    cleanverbs = [verb for verb in verbs if verb not in string.punctuation]  # strip punct
     cleanverbs = [word for word in cleanverbs if word not in other_things_to_strip]
     newdata = ' '.join(cleanverbs)  # make it a single string
     return newdata
 
 
-def rewrite_all(dirname, newdir, funct=cleanup_and_pos, pos='VB'):
+def rewrite_all(dirname, newdir, funct=get_pos, pos='VB'):
     """ Take in a director of original docs, a new directory name, and a function to apply to each."""
 
     if not os.path.exists(newdir):
@@ -74,7 +75,7 @@ def main():
         output_dir = sys.argv[2]
         POS = sys.argv[3]
 
-        rewrite_all(input_dir, output_dir, funct=cleanup_and_pos, pos=POS)
+        rewrite_all(input_dir, output_dir, funct=get_pos, pos=POS)
         print 'Wrote out new files to ', output_dir
 
 if __name__ == "__main__":
