@@ -164,6 +164,9 @@ function process(error, data1, data2) {
   var demdata = make_pairs(data1),
     repdata = make_pairs(data2);
 
+  // it's way worse with all of them -- need to provide cutoffs in ui?
+  // config settings?  also, stopwords handling.
+
   make_barvis(demdata.slice(0,150), "#barsdem", "steelblue");  // giant user issue - when to cut it off.
   make_wordcloud(demdata.slice(0,150), "#wordclouddem", "steelblue");
   make_barvis(repdata.slice(0,150), "#barsrep", "red");  // giant user issue - when to cut it off.
@@ -171,8 +174,8 @@ function process(error, data1, data2) {
 }
 
 queue()
-  .defer(d3.text, "data/dem_debate_2015_10_13_wapo.txt_lc")
-  .defer(d3.text, "data/gop_debate_2015_9_16_wapo.txt_lc")
+  .defer(d3.text, "data/dem_debate_verbs.txt")
+  .defer(d3.text, "data/rep_debate_verbs.txt")
   .await(process);
 
 </script>
