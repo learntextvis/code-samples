@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
+
+<style>
+
+body {
+  font-family: Arial;
+}
+
+#vis {
+  overflow: hidden;
+  width: 500px;
+  position: relative;
+}
+
+.word {
+  bottom: 0;
+  left: 0;
+  margin: 3px;
+  display: inline-block;
+}
+
+.super {
+  font-size: 50%;
+  color: #999;
+}
+
+</style>
+
+<body>
+
+  <h2>Experimental Word Count</h2>
+
+  <div id="vis"></div>
+
+<script src="//d3js.org/d3.v3.min.js"></script>
+<script src="http://d3js.org/queue.v1.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/3.10.1/lodash.js"></script>
+<script src="js/wordcount.js"></script>
+
+<script>
+
+var stopwords = ["well", "Well", "very", "That", "not", "n't", "have", "is", "are", "be", "was", "'re", "'m", "'ve", "'s", "has"];
+
+var width = 900,
+  height = 100;
+
+var colors = {dem:"steelblue", rep: "red"};
+
+var fontscale = d3.scale.linear()
+    .range([10, 60]);
+
+function make_vis(data, selector, color) {
+
+  fontscale.domain(d3.extent(data, function (d) {
+      return d.count;
+    }));
+
+  d3.select("body").select("#vis").selectAll("div.word").data(data)
+  .enter()
+  .append("div")
+  .attr("class", "word")
+  .style("font-size", function(d) {
+    return fontscale(d.count) + "px";
+  })
+  .html(function(d) {
+    return d.word + "<sup class='super'>" + d.count + "</sup>"
+  });
+
+}
+
+function make_pairs(data) {
+
+  var counts = [];
+  var hist = wordCount(data);
+  var pairs = _.pairs(hist);
+  pairs.forEach(function (pair) {
+    var word = pair[0], count = pair[1];
+
+    if (stopwords.indexOf(word) == -1) {
+      counts.push({ "word" : word,
+                    "count": count
+                    });
+    }
+  });
+  counts.sort(function(a,b) {return b.count - a.count;});
+  return counts;
+}
+
+
+function process(error, data1, data2) {
+
+  if (error) { console.log("error", error); }
+
+  var demdata = make_pairs(data1),
+    repdata = make_pairs(data2);
+
+  // it's way worse with all of them -- need to provide cutoffs in ui?
+  // config settings?  also, stopwords handling.
+
+  make_vis(demdata.slice(0,50), "#vis");
+}
+
+queue()
+  .defer(d3.text, "data/dem_debate_verbs.txt")
+  .defer(d3.text, "data/rep_debate_verbs.txt")
+  .await(process);
+
+</script>
+
+</body>
