@@ -26,11 +26,13 @@ body {
 
 #demtitle {
   color: steelblue;
+  max-width: 300px;
 }
 
 #reptitle {
   color: red;
   margin-left: 20px;
+  max-width: 300px;
 }
 
 .clouds {
@@ -46,16 +48,18 @@ body {
 
   <h2>Word Cloud Transitions</h2>
 
-  <p>Using the js file utils/wordcount.js and jason davies wordcloud in utils/d3.layout.cloud.js.  Set merging left and right.  The merge combines the two vocabs and updates the data set shown, keeping original colors; but the sizing is wrong now (because of scale factors going on that I didn't fix).</p>
-  <p> Also, I think this should be on one big svg and animate left-right. Colors could be set by interpolation for the ones that are in both vocabs.  Size by tf-idf would be best in a multiple source case.
+  <p>Using the js file utils/wordcount.js and jason davies wordcloud in utils/d3.layout.cloud.js.  The merge combines the two vocabs and updates the data set shown, keeping original colors; but the sizing is wrong now (because of scale factors going on that I didn't fix).</p>
+  <p> Also, I think this should be on one big svg and animate left-right. Colors could be set by interpolation for the ones that are in both vocabs.  Size by tf-idf would be best in a multiple source case.  Vis-design wise, this is not super interesting except for where the differences lie, and those are the smallest words, hard to make out. And scale diff between the dem and republicans is hard to see without a bar chart or something too. :(
   </p>
 
-  <button id="buttonleft">Merge Left</button>
-  <button id="buttonright">Merge Right</button>
+  <button id="buttondem">Democratic Only</button>
+  <button id="buttonrep">Republican Only</button>
+  <button id="buttonleft">Dem plus Missing Rep</button>
+  <button id="buttonright">Rep plus Missing Dem</button>
 
   <div class="titles">
-    <h2 class="title" id="demtitle">Democractic Debate Verbs</h2>
-    <h2 class="title" id="reptitle">Republican Debate Verbs</h2>
+    <h2 class="title" id="demtitle">Democractic Debate Adverbs</h2>
+    <h2 class="title" id="reptitle">Republican Debate Adverbs</h2>
   <div class="cloudsgroup">
     <div class="clouds" id="wordclouddem"></div>
     <div class="clouds" id="wordcloudrep"></div>
@@ -69,7 +73,7 @@ body {
 
 <script>
 
-var stopwords = ["have", "is", "are", "be", "was", "'re", "'m", "'ve", "'s", "has"];
+var stopwords = ["well", "Well", "very", "That", "not", "n't", "have", "is", "are", "be", "was", "'re", "'m", "'ve", "'s", "has"];
 
 var cloudwidth = 500,
   cloudheight = 500;
@@ -169,13 +173,11 @@ function process(error, data1, data2) {
   var demdata = make_pairs(data1, "dem"),
     repdata = make_pairs(data2, "rep");
 
+  // this is the Wrong way to do this. Just for the trial, though.
   var combined = demdata.slice(0,150).concat(repdata.slice(0,150));
   fontscale.domain(d3.extent(combined, function (d) {
       return d.count;
     }));
-
-  // it's way worse with all of them -- need to provide cutoffs in ui?
-  // config settings?  also, stopwords handling.
 
   var clouddem = init_cloud("#wordclouddem");
   var cloudrep = init_cloud("#wordcloudrep");
@@ -183,16 +185,29 @@ function process(error, data1, data2) {
   make_wordcloud(repdata.slice(0,150), cloudrep, colors);
 
   d3.select("#buttonleft").on("click", function() {
+    d3.select("#demtitle").html("Democratic Adverbs Shared by Republicans, Plus Special Republican-Only Adverbs in Red");
     make_wordcloud(combined, clouddem, colors);
   });
   d3.select("#buttonright").on("click", function() {
+    d3.select("#reptitle").html("Republican Adverbs Shared by Democrats, Plus Special Democrat-Only Adverbs in Blue");
     make_wordcloud(combined, cloudrep, colors);
   });
+  d3.select("#buttondem").on("click", function() {
+    clouddem.selectAll("text").remove();
+    d3.select("#demtitle").html("Democratic Debate Adverbs");
+    make_wordcloud(demdata.slice(0,150), clouddem, colors);
+  });
+  d3.select("#buttonrep").on("click", function() {
+    d3.select("#reptitle").html("Republican Debate Adverbs");
+    cloudrep.selectAll("text").remove();
+    make_wordcloud(repdata.slice(0,150), cloudrep, colors);
+  });
+
 }
 
 queue()
-  .defer(d3.text, "data/dem_debate_verbs.txt")
-  .defer(d3.text, "data/rep_debate_verbs.txt")
+  .defer(d3.text, "data/dem_debate_adverbs.txt")
+  .defer(d3.text, "data/rep_debate_adverbs.txt")
   .await(process);
 
 
