@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
+
+<style>
+
+.doc {
+  padding: 20px;
+  margin-top: 50px;
+}
+
+</style>
+
+<body>
+
+  <h2>Experimental Word Count</h2>
+
+  <p>Trying this dudes textAnalysisSuite in js.  I guess the TFStorage updates with each doc added, but how do you assess each doc against the store.</p>
+
+  <div class="results"></div>
+
+<script src="//d3js.org/d3.v3.min.js"></script>
+<script src="http://d3js.org/queue.v1.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/3.10.1/lodash.js"></script>
+<script src="js/textAnalysisSuite/textAnalysis.js"></script>
+<script src="js/textAnalysisSuite/nGrams.js"></script>
+<script src="js/textAnalysisSuite/TFIDF.js"></script>
+
+<script>
+
+
+var TFStorage = {};
+
+function do_file(data){
+
+  var simpleAnalysis = textAnalysis.analyzeText(data);
+  var bigramsSet = nGrams.buildNGrams(data, 2);
+  var bigramList = nGrams.listNGramsByCount(bigramsSet);
+  var commonBigrams = nGrams.getMostCommonNGrams(bigramsSet);
+  var printableBigrams = '';
+  for(var i = 0; i < commonBigrams.length; i++){
+    printableBigrams += '"' + commonBigrams[i] + '"';
+    if(i < commonBigrams.length - 1) printableBigrams += ', ';
+  }
+
+  var TFIDFAnalysis = TFIDF.fullTFIDFAnalysis(data, {TFStorage: TFStorage});
+  var printableUniques = '';
+  for(var i = 0; i < TFIDFAnalysis.mostUniqueTerms.length; i++){
+    printableUniques += '"' + TFIDFAnalysis.mostUniqueTerms[i] + '"';
+    if(i < TFIDFAnalysis.mostUniqueTerms.length - 1) printableUniques += ', ';
+  }
+
+
+  var results = ""
+
+  results += 'Simple analysis<br>' + JSON.stringify(simpleAnalysis) + "<br>";
+  results += 'Bigrams<br>' + JSON.stringify(bigramList) + "<br>";
+  results += 'TFIDF<br>' + JSON.stringify(TFIDFAnalysis) + "<br>";
+  results += "<br>";
+  results +='Word Count: ' + simpleAnalysis.wordCount + "<br>";
+  results +='Sentence Count: ' + simpleAnalysis.sentenceCount + "<br>";
+  results +='Paragraph Count: ' + simpleAnalysis.paragraphCount + "<br>";
+  results +='Estimated Reading Time: ' + simpleAnalysis.estimatedReadingTime + ' minutes <br>';
+  results +='Most Common Bigrams: ' + printableBigrams + "<br>";
+  results +='Most Unique Terms: ' + printableUniques + "<br>";
+
+  d3.select(".results").append("div").attr("class", "doc").html(results);
+
+}
+
+
+function process(error, file1, file2) {
+
+  if (error) { console.log(error); }
+
+  do_file(file1);
+  do_file(file2);
+
+}
+
+queue()
+  .defer(d3.text, "data/dem_debate_verbs.txt")
+  .defer(d3.text, "data/rep_debate_verbs.txt")
+  .await(process);
+
+</script>
+
+</body>
+</html>
