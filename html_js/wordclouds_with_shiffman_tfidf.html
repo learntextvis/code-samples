@@ -1,0 +1,144 @@
+<head>
+  <script language="javascript" type="text/javascript" src="//cdn.jsdelivr.net/p5.js/0.3.6/p5.min.js"></script>
+  <script language="javascript" type="text/javascript" src="//cdn.jsdelivr.net/p5.js/0.3.6/addons/p5.dom.js"></script>
+  <script language="javascript" type="text/javascript" src="js/shiffman/tfidf.js"></script>
+  <script src="//d3js.org/d3.v3.min.js"></script>
+  <script src="http://d3js.org/queue.v1.min.js"></script>
+  <script src="js/d3.layout.cloud.js"></script>
+
+  <style>
+  .cloud {
+    display: inline-block;
+    position: relative;
+    margin-left: 20px;
+  }
+  </style>
+</head>
+
+<body>
+
+  <h1>TF-IDF Word Clouds</h1>
+
+  <p>Using tf-idf (Shiffman's) for the wordcloud sizing, with a long list of stopwords.  We should always publish what the stopwords are - they're part of the analysis process.  In this case, names of candidates and moderators were pulled out, but some names were left in (Ronald is Ronald Reagan?).</p>
+
+  <p>Also, bigram analysis should happen in tokenization.</p>
+
+<div class="clouds">
+  <div class="cloud" id="cloud0"></div>
+  <div class="cloud" id="cloud1"></div>
+</div>
+
+<script>
+
+
+/// THIS CODE IS SUPER SHITTY - a hacky mode of Shiffman's code to make it work
+/// with word clouds, should be rewritten with less garbage and more objects
+
+var tfidf;
+var files = [];
+var fileCount = 0;
+
+var stopwords = "paul, ben, mr, jim, senator, malley, jeb, bernie, mayor, ms, roberts, hugh, secretary, cruz, dr, huckabee, hewitt, carson, kasich, walker, jake, rubio, fiorina, christie, secretary, anderson, cnn, chafee, webb, omalley, the,to,i,and,that,a,of,we,you,in,it,is,s,have,this,for,on,be,not,t,what,are,people,with,about,but,our,do,was,they,he,as,re,tapper,will,would,want,there,senator,all,my,governor,so,going,know,m,president,who,because,if,country,clinton,cooper,can,when,ve,has,one,well,at,thank,me,just,said,from,get,an,up,sanders,don,here,now,been,say,by,make,us,bush,no,out,go,had,your,them,how,their,more,like,did,should,im, united, states,were, its, thats, dont, donald";
+
+stopwords = stopwords.replace(/\s+/g, "").split(",");
+
+function make_cloud(data, selector, color) {
+
+  var fontscale = d3.scale.linear()
+    .range([10, 64])
+    .domain(d3.extent(data, function (d) {
+      return d.tfidf;
+    }));
+
+  var layout = d3.layout.cloud()
+    .size([500, 500])
+    .words(data)
+    .rotate(0)
+    .font("Impact")
+    .spiral("rectangular")
+    .text(function(d) {
+      return d.word; })
+    .fontSize(function(d) {
+      return fontscale(d.tfidf); })
+    .on("end", draw);
+
+  function draw(words) {
+    d3.select(selector).append("svg")
+      .attr("width", layout.size()[0])
+      .attr("height", layout.size()[1])
+      .attr("class", "wordcloud")
+      .append("g")
+      // without the transform, words would get cutoff to the left and top, they would
+      // appear outside of the SVG area
+      .attr("transform", "translate(" + layout.size()[0] / 2 + "," + layout.size()[1] / 2 + ")")
+      .selectAll("word")
+      .data(words)
+      .enter().append("text")
+      .style("font-size", function(d) {
+        return fontscale(d.tfidf) + "px";
+      })
+      .style("font-family", "Impact")
+      .attr("fill", color)
+      .attr("text-anchor", "middle")
+      .attr("transform", function(d) {
+          return "translate(" + [d.x, d.y] + ")rotate(" + d.rotate + ")";
+      })
+      .text(function(d) {
+          return d.word; });
+  }
+
+  layout.start();
+}
+
+function make_pairs(tfidf) {
+  var pairs = [];
+   // Get all the words
+  var words = tfidf.getKeys();
+
+  words.forEach(function(word) {
+    if (stopwords.indexOf(word) == -1) {
+      var count = tfidf.getScore(word);
+      pairs.push({
+          word: word,
+          tfidf: count
+        });
+    }
+  });
+  pairs.sort(function(a,b) {return d3.descending(a.tfidf, b.tfidf);});
+  return pairs;
+}
+
+function process(error, data1, data2) {
+
+  files = [data1, data2];
+  colors = ["steelblue", "red"];
+  fileCount = files.length;
+
+  files.forEach(function(file, i) {
+    tfidf = new TFIDF();
+      // Process this data into the tfidf object
+    tfidf.termFreq(file);
+    // Now we need to read all the rest of the files
+    // for document occurences -
+    // LC: this seems inefficient, we do it each time?
+    files.forEach(function(file) {
+      tfidf.docFreq(file);
+    });
+    tfidf.finish(fileCount); // it needs total count for division
+    tfidf.sortByScore();
+    words = make_pairs(tfidf);
+    make_cloud(words.slice(0,100), "#cloud" + i, colors[i]);
+  });
+
+}
+
+
+queue()
+  .defer(d3.text, "data/dem_debate_nouns.txt")
+  .defer(d3.text, "data/rep_debate_nouns.txt")
+  .await(process);
+
+
+</script>
+
+</body>
