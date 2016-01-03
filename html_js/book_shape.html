@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
+
+<style>
+
+body {
+  font-family: Arial;
+}
+.text {
+  display: inline-block;
+  position: relative;
+  margin-left: 20px;
+}
+
+</style>
+
+<h1>Literal Shape of a book</h1>
+
+<h2>Emma (Jane Austen) and Moby Dick (Melville) Line Lengths</h2>
+
+<p>Would be easy to add tooltips with the actual text of course. Pixel per line now.
+
+<p> Gray lines are dialog lines by a simple (not smart) test that won't work right if there are two quotes in one line.
+
+<div class="texts">
+  <div class="text" id="text1"></div>
+  <div class="text" id="text2"></div>
+</div>
+
+<script src="//d3js.org/d3.v3.min.js"></script>
+<script src="http://d3js.org/queue.v1.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/3.10.1/lodash.js"></script>
+<script>
+
+
+function get_lines(string){
+  return string.split("\n");
+}
+
+var width = 100;
+var height;
+
+var linelength = d3.scale.linear().range([0, width]);
+
+var quotes = false;
+
+function color_it(line) {
+  if (line.indexOf('"') != -1) {
+    quotes = !quotes;
+  }
+  return quotes;
+}
+
+function draw_lines(data, selector, color) {
+
+  linelength.domain(d3.extent(data, function(d) {
+    return d.length;
+   })
+  );
+
+  var svg = d3.select(".texts").select(selector).append("svg")
+    .attr("width", width)
+    .attr("height", height);
+
+  svg.selectAll("line")
+    .data(data)
+    .enter()
+    .append("line")
+    .attr("x1", 0)
+    .attr("x2", function(d) {
+      return linelength(d.length);
+    })
+    .attr("y1", function(d, i) {
+      return i;
+    })
+    .attr("y2", function(d, i) {
+      return i;
+    })
+    .attr("stroke", function (d) {
+      if (color_it(d)) {
+        return "gray";
+      } else {
+        return color;
+      }
+    });
+}
+
+
+function process(error, data1, data2) {
+
+if (error) {console.log(error);}
+
+var lines1 = get_lines(data1);
+console.log(lines1.length);
+
+var lines2 = get_lines(data2);
+console.log(lines2.length);
+
+height = d3.max([lines1.length, lines2.length]);
+
+draw_lines(lines1, "#text1", "blue");
+draw_lines(lines2, "#text2", "red");
+
+}
+
+queue()
+  .defer(d3.text, "data/Austen_Emma.txt")
+  .defer(d3.text, "data/Melville_MobyDick.txt")
+  .await(process);
+
+</script>
+
+</body>

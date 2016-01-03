@@ -6,7 +6,7 @@ var tfidf;
 
 var fileCount = 0;
 
-function setup() {  
+function setup() {
   // No canvas
   // Though doing something visual with this is a great idea for an assignment
   noCanvas();

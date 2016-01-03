@@ -84,7 +84,6 @@ draft code to communicate ideas.
     * R examples: https://eight2late.wordpress.com/2015/07/22/a-gentle-introduction-to-cluster-analysis-using-r/, mine in:
     * tree view for first version?
     * network would be "easy" I guess too
-    
 
 
 
