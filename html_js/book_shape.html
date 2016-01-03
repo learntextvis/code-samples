@@ -3,14 +3,39 @@
 
 <style>
 
-body {
-  font-family: Arial;
-}
-.text {
-  display: inline-block;
-  position: relative;
-  margin-left: 20px;
-}
+  body {
+    font-family: Arial;
+  }
+
+  .title {
+    display: inline-block;
+    position: relative;
+    padding-left: 50px;
+  }
+
+  .text {
+    display: inline-block;
+    position: relative;
+    margin-left: 40px;
+  }
+
+  .text line {
+    stroke: steelblue;
+  }
+
+  line.dialog {
+    stroke: pink;
+  }
+
+  .tooltip {
+    position: absolute;
+    z-index: 10;
+  }
+
+  .tooltip p {
+    padding: 2px;
+    background-color: #eee;
+  }
 
 </style>
 
@@ -18,9 +43,14 @@ body {
 
 <h2>Emma (Jane Austen) and Moby Dick (Melville) Line Lengths</h2>
 
-<p>Would be easy to add tooltips with the actual text of course. Pixel per line now.
+<p>Pixel per line now, with tooltips for the text itself.
 
-<p> Gray lines are dialog lines by a simple (not smart) test that won't work right if there are two quotes in one line.
+<p>Pink lines are dialog lines.
+
+  <div class="titles">
+    <h2 class="title" id="#title1">Emma</h2>
+    <h2 class="title" id="#title2">Moby Dick</h2>
+  </div>
 
 <div class="texts">
   <div class="text" id="text1"></div>
@@ -44,14 +74,28 @@ var linelength = d3.scale.linear().range([0, width]);
 
 var quotes = false;
 
+var tooltip = d3.select("body")
+        .append("div")
+        .attr("class", "tooltip");
+
+function escapeRegExp(str) {
+  return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
+}
+
+
 function color_it(line) {
+  // hack for 2 quotes in one line - assume it ends quote
+  if (line.match(/"/g) && line.match(/"/g).length == 2) {
+    quotes = false;
+    return true;
+  }
   if (line.indexOf('"') != -1) {
     quotes = !quotes;
   }
   return quotes;
 }
 
-function draw_lines(data, selector, color) {
+function draw_lines(data, selector) {
 
   linelength.domain(d3.extent(data, function(d) {
     return d.length;
@@ -76,14 +120,35 @@ function draw_lines(data, selector, color) {
     .attr("y2", function(d, i) {
       return i;
     })
-    .attr("stroke", function (d) {
+    .classed("dialog", function (d) {
       if (color_it(d)) {
-        return "gray";
+        return true;
       } else {
-        return color;
+        return false;
       }
-    });
+    })
+    .on("mouseover", mouseoverFunc)
+    .on("mousemove", mousemoveFunc)
+    .on("mouseout", mouseoutFunc);
 }
+
+function mouseoverFunc(d) {
+    tooltip
+      .style("display", null) // this removes the display none setting from it
+      .html("<p>" + d + "</p>");
+  }
+
+  function mouseoutFunc() {
+      // this removes special classes for focusing from all lines. Back to default.
+      tooltip.style("display", "none");  // this sets it to invisible!
+  }
+
+  function mousemoveFunc(d) {
+    //console.log("events", window.event, d3.event);
+    tooltip
+      .style("top", (d3.event.pageY - 10) + "px" )
+      .style("left", (d3.event.pageX + 10) + "px");
+  }
 
 
 function process(error, data1, data2) {
@@ -98,8 +163,8 @@ console.log(lines2.length);
 
 height = d3.max([lines1.length, lines2.length]);
 
-draw_lines(lines1, "#text1", "blue");
-draw_lines(lines2, "#text2", "red");
+draw_lines(lines1, "#text1");
+draw_lines(lines2, "#text2");
 
 }
 
