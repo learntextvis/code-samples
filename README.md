@@ -1,4 +1,4 @@
-# code-samples repo
+# code-samples repo and project notes
 draft code to communicate ideas.
 
 Please read the proposal doc for audience and intent: https://docs.google.com/document/d/1X87yd23RobW4r3-DmT0rPeaFS__3PvCITeYPfk24HZs/edit?usp=sharing
@@ -78,8 +78,8 @@ Would recommend playing with Lexos if you haven't.
 ## How about a Structure Like This for the Site...
 
 1) Getting Setup:
-    Options for R, Python, Pure JS
-    (Explain cons of just in-browser JS)
+    * Options for R, Python, Pure JS
+    * (Explain cons of just in-browser JS)
 2) Shapes of texts
 3) Concordance-views (simple search)
 4) Tokenization and Simple Counts, stop words  [We explain fancy tokenization happens in the python/r scripts, simple space sep can be done in js.]
@@ -93,25 +93,28 @@ Would recommend playing with Lexos if you haven't.
 
 **Discuss: Scripts for pre-processing (python/r) and/or in-page analysis with js.**
 
-###JS:
-    * RiTa for POS: http://www.ghostweather.com/files/image_replacement/; I haven't experimented with all of it's capabilities yet. Not sure I believe it can be as good as nltk/SpaCy and R's tm/NLP/SnowballC etc.
-    * shiffman's tf-idf in js (used in some of my examples)
-    * wordcount.js
-    * that Natural node/js lib had issues last time I used it, but Shiffman was issueing merge requests against it...
-    * I included some dude's textAnalysisSuite in the html_js/js dir, but I don't understand it's tfidf. The bigram thing looks interesting/useful.
-    * I don't really think the js tools are as good yet or as complete; and for sizable projects that would be slow in browser, would we give node instructions?  (Argh)
+###JS
+
+* RiTa for POS: http://www.ghostweather.com/files/image_replacement/; I haven't experimented with all of it's capabilities yet. Not sure I believe it can be as good as nltk/SpaCy and R's tm/NLP/SnowballC etc.
+* shiffman's tf-idf in js (used in some of my examples)
+* wordcount.js
+* that Natural node/js lib had issues last time I used it, but Shiffman was issueing merge requests against it...
+* I included some dude's textAnalysisSuite in the html_js/js dir, but I don't understand it's tfidf. The bigram thing looks interesting/useful.
+* I don't really think the js tools are as good yet or as complete; and for sizable projects that would be slow in browser, would we give node instructions?  (Argh)
 
 ###Python
-    * Note that python stuff generally needs downloads. SpaCy and NLTK both do.
-    * I can make command-line scripts that prep data as json if we want that... My example script in preprocess_files.py was for another class, and i used it here to get POS for the word cloud experiments
-    * Need to well-document and test the install&run instructions for someone newbie
-    * Requires command line expertise
-    * SpaCy might be a good lib to use, I have used it for word2vec related things but haven't checked carefully the contrast with NLTK/pattern.  It won't do tf-idf for us.
+
+* Note that python stuff generally needs downloads. SpaCy and NLTK both do.
+* I can make command-line scripts that prep data as json if we want that... My example script in preprocess_files.py was for another class, and i used it here to get POS for the word cloud experiments
+* Need to well-document and test the install&run instructions for someone newbie
+* Requires command line expertise
+* SpaCy might be a good lib to use, I have used it for word2vec related things but haven't checked carefully the contrast with NLTK/pattern.  It won't do tf-idf for us.
 
 ###R
-    * Is this simplest actually? scripts that can be run from RStudio or command line?
-    * Still require certain packages
-    * My R is rusty but Jim's is good I bet
+
+* Is this simplest actually? scripts that can be run from RStudio or command line?
+* Still requires certain packages
+* My R is rusty but Jim's is good I bet
 
 **ToDo: Compare the accuracy and quality of the results in the 3 languagues and multiple libraries in Python/R. There are a lot.  I can do that.**)
 
