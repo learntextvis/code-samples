@@ -1,7 +1,8 @@
 # code-samples repo and project notes
 draft code to communicate ideas.
 
-Please read the proposal doc for audience and intent: https://docs.google.com/document/d/1X87yd23RobW4r3-DmT0rPeaFS__3PvCITeYPfk24HZs/edit?usp=sharing
+Please read the proposal doc for audience and intent: https://docs.google.com/document/d/1aLM0y56zCDUqUd6NRyiL0Nl9HPbKognBvK0aczcq3_4/edit?usp=sharing
+(this is a copy that can be commented on)
 
 Would recommend playing with Lexos if you haven't.
 
@@ -48,6 +49,8 @@ Would recommend playing with Lexos if you haven't.
     * tf-idf for multi-document cases
         * see examples like html_js/shiffman_tfidf.html, wordclouds_with_shiffman_tfidf.html
 
+* Word networks
+
 * Word Clouds: **Let's investigate ways to make them less sucky/more tolerable.**
     * Get rid of random coloring or words - color only as indicator
     * Idea: little bar charts beside wordclouds to show distribution of counts?
@@ -62,11 +65,12 @@ Would recommend playing with Lexos if you haven't.
     * stop words are iterative process with word cloud displays
 
 * Timeseries
-    * show location of word in doc over time (concordance)
+    * show location of word in doc over time (concordance view
     * use windowsize (user-settable) and count, show over time
         * examples are wordclouds per chapter in a book, in order
         * who talks when in a debate / play
         * the Tarantino obscenity chart in 538. We should be able to make that.
+        * Simple example in timeseries.html shows just words per chapter in order in Emma.
     * Vis types over time - bar, line, even word cloud??
 
 * Clustering docs
@@ -81,12 +85,15 @@ Would recommend playing with Lexos if you haven't.
     * Options for R, Python, Pure JS
     * (Explain cons of just in-browser JS)
 2) Shapes of texts
-3) Concordance-views (simple search)
-4) Tokenization and Simple Counts, stop words  [We explain fancy tokenization happens in the python/r scripts, simple space sep can be done in js.]
-5) Parts of speech
+3) Concordance-views (simple search) -- keywords in context
+4) Tokenization, Simple Counts, stop words
+    [We explain fancy tokenization happens in the python/r scripts, simple space sep can be done in js.]
+    Word networks come here - and bigrams/n-grams.
+5) Parts of speech, lemmatization - show how counts change, what POS gets you.
 6) Word clouds -- this basically sets us up for doing tf-idf because simple counts are bad for comparative documents, but tf-idf is better
     * includes a variety of word cloud types -- bubble/networks, regular, maybe my ordered count css version
 7) Time Series - breaking a text into sections, using multiple texts that have time ordering
+    * Maybe simple sentiment via polarity word lists I added to the repo too.
 8) Clustering (if we get to it, or I can add it later, if you help with the cluster-output-to-tree structure for js)
 
 ## Languages for Discussion
@@ -115,6 +122,9 @@ Would recommend playing with Lexos if you haven't.
 * Is this simplest actually? scripts that can be run from RStudio or command line?
 * Still requires certain packages
 * My R is rusty but Jim's is good I bet
+
+
+**Discuss: Should we have some kind of consistent format like JSON for output from the scripts?  Or csv, which is easier for newbies.  Configuration settings could be in a simple JSON file separate from the data files.**
 
 **ToDo: Compare the accuracy and quality of the results in the 3 languagues and multiple libraries in Python/R. There are a lot.  I can do that.**)
 
