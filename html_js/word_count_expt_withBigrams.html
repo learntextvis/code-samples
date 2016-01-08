@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
+
+<style>
+
+body {
+  font-family: Arial;
+}
+
+.viswrapper {
+}
+
+.vis {
+  display: inline-block;
+  position: relative;
+  overflow: hidden;
+  width: 500px;
+  margin-left: 20px;
+}
+
+#visdem {
+  color: steelblue;
+}
+
+#visrep {
+  color: red;
+}
+
+#both {
+  padding-top: 30px;
+  padding-left: 30px;
+}
+
+.word {
+  bottom: 0;
+  left: 0;
+  margin: 3px;
+  display: inline-block;
+}
+
+.title {
+  display: inline-block;
+  position: relative;
+  padding-left: 100px;
+}
+
+#demtitle {
+  color: steelblue;
+  max-width: 300px;
+}
+
+#reptitle {
+  color: red;
+  margin-left: 200px;
+  max-width: 300px;
+}
+
+</style>
+
+<body>
+
+  <h2>Experimental Word Count</h2>
+
+  <p>Use both size and color to indicate scale change? Scale relative to both, or by each one?  Use percentage vs. count?  Add small histograms?  Allow mouse-over in each (or indicate by some annotation shared membership?). </p>
+
+  <p>Currently color indicates unique words on each side that are not in the other's top N (50 in this case).  At the bottom is them combined and colored by party. We see the flaws in using just count there.</p>
+
+  <div class="titles">
+    <h2 class="title" id="demtitle">Democractic Verbs</h2>
+    <h2 class="title" id="reptitle">Republican Verbs</h2>
+  </div>
+
+  <div class="viswrapper">
+    <div class="vis" id="visdem"></div>
+    <div class="vis" id="visrep"></div>
+  </div>
+
+<script src="//d3js.org/d3.v3.min.js"></script>
+<script src="http://d3js.org/queue.v1.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/3.10.1/lodash.js"></script>
+<script src="js/wordcount.js"></script>
+
+<script>
+
+var stopwords = ["well", "Well", "very", "That", "not", "n't", "have", "is", "are", "be", "was", "'re", "'m", "'ve", "'s", "has", "do"];
+
+var width = 900,
+  height = 100;
+
+var colors = {dem:"steelblue", rep: "red"};
+
+var fontscale = d3.scale.linear()
+    .range([12, 60]);
+
+var intersection = [];
+
+// color superscript, or the word itself?
+var supercolor = d3.scale.linear().range(["green", "orange"]);
+
+function get_count(d) {
+
+  // should be done with templates -
+  // goal is to only reduce the font by 50% if it's above a certain level
+  // and ideally only show superscript count if the value differs, but that's
+  // harder to mockup fast
+
+  //console.log(d);
+
+  var tag = "<sup class='super' style='";
+  if (fontscale(d.count) >= 18) {
+    tag += "font-size:50%;";
+  } else {
+    tag += "font-size:75%;"; // otherwise the 'sup' sets it to 'smaller';
+  }
+  tag+= "color:" + supercolor(d.count) + ";";
+  tag+="'>";
+  return tag+= d.count + "</sup>"
+}
+
+function make_vis(data, selector, colortheme) {
+
+  var colortheme = colortheme || "difference";
+
+  // scale is relative to each data set here
+
+  fontscale.domain(d3.extent(data, function (d) {
+      return d.count;
+    }));
+
+  supercolor.domain(d3.extent(data, function (d) {
+      return d.count;
+    }));
+
+
+  d3.select(selector)
+    .selectAll("div.word")
+    .data(data)
+    .enter()
+    .append("div")
+    .attr("class", "word")
+    .style("font-size", function(d) {
+      return fontscale(d.count) + "px";
+    })
+    .style("color", function(d) {
+      if (colortheme==="difference" && intersection.indexOf(d.word) != -1) {
+        return "gray";
+      } else if (d.label == "dem") { return "steelblue";}
+      else if (d.label == "rep") { return "red"; }
+    })
+    .html(function(d) {
+      return d.word + get_count(d);
+    });
+
+}
+
+
+function make_pairs(data, label, cutoff, orderby) {
+
+  var orderby = orderby || "count";
+  var cutoff = cutoff || 50;
+  var label = label || null;
+
+  var counts = [];
+  var pairs = data;
+  pairs.forEach(function (pair) {
+    var word = pair[0], count = pair[1];
+
+    if (stopwords.indexOf(word) == -1) {
+      counts.push({ "word" : word,
+                    "count": count,
+                    "label": label
+                    });
+    }
+  });
+  // sort by count first and then slice and possibly alphabetize
+  counts.sort(function(a,b) {return b.count - a.count;});
+  if (orderby === "count") {
+    return counts.slice(0,cutoff);
+  } else {
+    return counts.slice(0,cutoff).sort(function(a,b) {return d3.ascending(a.word,b.word);});
+  }
+}
+
+
+
+function process(dem) {
+
+  var demdata = make_pairs(dem, "dem", 50, "count");
+    //repdata = make_pairs(rep, "rep", 50, "count");
+
+  make_vis(demdata, "#visdem");
+  //make_vis(repdata, "#visrep");
+  //make_vis(demdata.concat(repdata).sort(function(a,b) {return d3.descending(a.count, b.count);}), "#both", "combined");
+
+  // yes this isn't DRY
+
+}
+
+var data = [['webb', 40],
+ ['right', 46],
+ ['clinton', 68],
+ ['people', 127],
+ ['chafee', 28],
+ ['one', 39],
+ ['states', 10],
+ ['say', 51],
+ ['street', 3],
+ ['want', 77],
+ ['need', 72],
+ ['debate', 22],
+ ["o'malley", 46],
+ ['said', 48],
+ ['cooper', 181],
+ ['thank', 56],
+ ['would', 91],
+ ['make', 36],
+ ['anderson', 40],
+ ['going', 78],
+ ['take', 33],
+ ['lot', 47],
+ ['first', 39],
+ ['years', 37],
+ ['way', 32],
+ ['get', 61],
+ ['issues', 30],
+ ['sanders', 85],
+ ['like', 33],
+ ['let', 52],
+ ['know', 60],
+ ['president', 46],
+ ['believe', 38],
+ ['change', 13],
+ ['obama', 5],
+ ['every', 29],
+ ['applause', 82],
+ ['country', 93],
+ ['well', 38],
+ ['governor', 20],
+ ['american', 46],
+ ['time', 45],
+ ['senator', 32],
+ ['democratic', 22],
+ ['think', 97],
+ ['secretary', 23],
+ ['secretary clinton', 58],
+ ['senator sanders', 55],
+ ['wall street', 26],
+ ['president obama', 30],
+ ['climate change', 23],
+ ["governor o'malley", 33],
+ ['united states', 20],
+ ['democratic presidential', 17],
+ ['criminal justice', 11],
+ ['middle class', 12],
+ ['senator webb', 25],
+ ['clinton well', 27],
+ ['health care', 12],
+ ['juan carlos', 9],
+ ['social security', 12],
+ ['las vegas', 7],
+ ['make sure', 12],
+ ['governor chafee', 16],
+ ['presidential debate', 11],
+ ['lives matter', 9]];
+
+process(data);
+
+</script>
+
+</body>
