@@ -1,0 +1,151 @@
+
+<!DOCTYPE html>
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
+
+<style>
+
+body {
+  font-family: Arial;
+}
+
+.barsgroup {
+  margin-left: 20px;
+}
+
+.bars {
+  display: inline-block;
+  position: relative;
+  margin-right: 20px;
+}
+
+.title {
+  display: inline-block;
+  position: relative;
+  padding-left: 150px;
+}
+
+#title2 {
+  color: steelblue;
+  margin-left: 150px;
+}
+
+#title1 {
+  color: red;
+  margin-left: 20px;
+}
+
+.clouds {
+  display: inline-block;
+  position: relative;
+  margin-left: 20px;
+}
+
+
+</style>
+
+<body>
+
+  <h2>Verbs by Sentiment Over Debates</h2>
+
+  <p>Draws simple lines with dimple.js.  Plotting Positive minus Negative sentiment words uttered in each grouping time period. Incoming data just has summary counts of pos, neg, and total words per window.
+
+    With dimple.js it's easy to make a tooltip with data in it - could include the words at each point.</p>
+
+
+  <div class="titles">
+    <h2 class="title" id="title1">Gop Debate</h2>
+    <h2 class="title" id="title2">Dem Debate</h2>
+  </div>
+  <div class="barsgroup">
+    <div class="bars" id="gop"></div>
+    <div class="bars" id="dem"></div>
+  </div>
+
+
+<script src="//d3js.org/d3.v3.min.js"></script>
+<script src="http://d3js.org/queue.v1.min.js"></script>
+<script src="http://dimplejs.org/dist/dimple.v2.1.6.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/3.10.1/lodash.js"></script>
+<script src="js/wordcount.js"></script>
+<script src="js/d3.layout.cloud.js"></script>
+
+<script>
+
+
+function make_vis(data, selector, colors) {
+
+  var svg = dimple.newSvg(selector, 500, 500);
+      var myChart = new dimple.chart(svg, data);
+      myChart.setBounds(60, 30, 405, 405);
+      var x = myChart.addCategoryAxis("x", "index");
+      x.addOrderRule("index");
+      myChart.addMeasureAxis("y", "value");
+      myChart.addColorAxis("value", ["red", "blue"]);
+      myChart.defaultColors = [new dimple.color(colors[0]),new dimple.color(colors[1]) ];
+      myChart.addSeries("sentiment", dimple.plot.line);
+      myChart.draw();
+}
+
+
+function reorg_data(data) {
+
+  var newdata = [];
+
+  // apparently dimple wants long format!
+
+  data.forEach(function(d) {
+    newdata.push({
+        "index": +d.index,
+        "sentiment" : "positive",
+        "value" : +d.pos
+    });
+    newdata.push({
+       "index": +d.index,
+        "sentiment" : "negative",
+        "value" : +d.neg
+    });
+
+  });
+  return newdata;
+
+}
+
+function make_net_data(data) {
+
+  var newdata = [];
+
+  // apparently dimple wants long format!
+
+  data.forEach(function(d) {
+    newdata.push({
+        "index": +d.index,
+        "sentiment" : "Net Pos",
+        "value" : +d.pos - d.neg
+    });
+
+  });
+  return newdata;
+
+}
+
+
+function process(error, datagop, datadem) {
+
+  if (error) { console.log("error", error); }
+
+  var datagop2 = make_net_data(datagop);
+  make_vis(datagop2, "#gop", ["steelblue", "red"]);
+
+  var datadem2 = make_net_data(datadem);
+  make_vis(datadem2, "#dem", ["steelblue", "red"]);
+
+}
+
+queue()
+  .defer(d3.json, "data/sentiment_gop.json")
+  .defer(d3.json, "data/sentiment_dem.json")
+  .await(process);
+
+</script>
+
+</body>
