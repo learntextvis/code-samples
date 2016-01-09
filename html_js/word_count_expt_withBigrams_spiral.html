@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
+
+<style>
+
+body {
+  font-family: Arial;
+}
+
+.viswrapper {
+}
+
+.vis {
+  display: inline-block;
+  position: relative;
+  overflow: hidden;
+  width: 900px;
+  margin-left: 20px;
+}
+
+#visdem {
+  color: steelblue;
+}
+
+#visrep {
+  color: red;
+}
+
+#both {
+  padding-top: 30px;
+  padding-left: 30px;
+}
+
+.word {
+  bottom: 0;
+  left: 0;
+  margin: 3px;
+  display: inline-block;
+}
+
+.title {
+  display: inline-block;
+  position: relative;
+  padding-left: 100px;
+}
+
+#demtitle {
+  color: steelblue;
+  max-width: 300px;
+}
+
+#reptitle {
+  color: red;
+  margin-left: 200px;
+  max-width: 300px;
+}
+
+#spiral {
+  stroke: none;
+}
+.super {
+  fill: steelblue;
+}
+
+</style>
+
+<body>
+
+  <h2>Experimental Word Count, Spiral Shape</h2>
+
+  <p>Spiral shape isn't calculated from the words themselves, so it's kind of trial and error to get it to look right.  Lots of params to try. Not so sure this works, but it was fun and easier than I expeced using tspan.</p>
+
+  <div class="titles">
+    <h2 class="title" id="demtitle">Democractic Verbs</h2>
+  </div>
+
+  <div class="viswrapper">
+    <div class="vis" id="visdem"></div>
+  </div>
+
+<script src="//d3js.org/d3.v3.min.js"></script>
+<script src="http://d3js.org/queue.v1.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/3.10.1/lodash.js"></script>
+<script src="js/spiral.js"></script>
+
+<script>
+
+var stopwords = ["well", "Well", "very", "That", "not", "n't", "have", "is", "are", "be", "was", "'re", "'m", "'ve", "'s", "has", "do"];
+
+var width = 900,
+  height = 900;
+
+var colors = {dem:"steelblue", rep: "red"};
+
+var fontscale = d3.scale.linear()
+    .range([12, 60]);
+
+// color superscript, or the word itself?
+var supercolor = d3.scale.linear().range(["green", "orange"]);
+
+
+function make_vis(data, selector, colortheme) {
+
+  var colortheme = colortheme || "difference";
+
+  // scale is relative to each data set here
+
+  fontscale.domain(d3.extent(data, function (d) {
+      return d.count;
+    }));
+
+  supercolor.domain(d3.extent(data, function (d) {
+      return d.count;
+    }));
+
+  var spiralPath = getSpiralPath(-1, 600, [450,450], 40, 6);
+  //Create the SVG
+  var svg = d3.select(selector).append("svg")
+    .attr("width", width)
+    .attr("height", height);
+
+  //Create an SVG path
+  svg.append("path")
+    .attr("id", "spiral") //very important to give the path element a unique ID to reference later
+    .attr("d", spiralPath) //Notation for an SVG path, from bl.ocks.org/mbostock/2565344
+    .style("fill", "none");
+
+  //Create an SVG text element and append a textPath element
+  var texts = svg.append("text")
+     .append("textPath") //append a textPath to the text element
+    .attr("xlink:href", "#spiral") //place the ID of the path here
+    .style("text-anchor","middle") //place the text halfway on the arc
+    .attr("startOffset", "50%");
+
+  var words = texts.selectAll("textspan")
+  .data(data)
+  .enter()
+  .append("tspan");
+
+  words
+  .style("font-size", function(d) {
+    return fontscale(d.count) + "px";
+  })
+  .text(function(d) {return d.word});
+
+  words
+  .append("tspan")
+  .style("baseline-shift", "super")
+  .style("font-size", function(d) {
+    if (d.count > 18) {
+      return "50%";
+    }
+    else {
+      return "75%";
+    }
+  })
+  .style("color", "red")
+  .attr("class", "super")
+  .text(function(d) {
+    return d.count;
+  });
+
+}
+
+
+function make_pairs(data, label, cutoff, orderby) {
+
+  var orderby = orderby || "count";
+  var cutoff = cutoff || 50;
+  var label = label || null;
+
+  var counts = [];
+  var pairs = data;
+  pairs.forEach(function (pair) {
+    var word = pair[0], count = pair[1];
+
+    if (stopwords.indexOf(word) == -1) {
+      counts.push({ "word" : word,
+                    "count": count,
+                    "label": label
+                    });
+    }
+  });
+  // sort by count first and then slice and possibly alphabetize
+  counts.sort(function(a,b) {return b.count - a.count;});
+  if (orderby === "count") {
+    return counts.slice(0,cutoff);
+  } else {
+    return counts.slice(0,cutoff).sort(function(a,b) {return d3.ascending(a.word,b.word);});
+  }
+}
+
+function make_string(data) {
+
+  var newstring = "";
+
+  data.forEach(function(d) {
+    newstring += d[0] + " ";
+  });
+
+  return newstring;
+
+}
+
+
+function process(dem) {
+
+  var demdata = make_pairs(dem, "dem", 50, "count");
+    //repdata = make_pairs(rep, "rep", 50, "count");
+  var datastring = make_string(dem);
+
+  make_vis(demdata.reverse(), "#visdem");
+
+}
+
+var data = [['webb', 40],
+ ['right', 46],
+ ['clinton', 68],
+ ['people', 127],
+ ['chafee', 28],
+ ['one', 39],
+ ['states', 10],
+ ['say', 51],
+ ['street', 3],
+ ['want', 77],
+ ['need', 72],
+ ['debate', 22],
+ ["o'malley", 46],
+ ['said', 48],
+ ['cooper', 181],
+ ['thank', 56],
+ ['would', 91],
+ ['make', 36],
+ ['anderson', 40],
+ ['going', 78],
+ ['take', 33],
+ ['lot', 47],
+ ['first', 39],
+ ['years', 37],
+ ['way', 32],
+ ['get', 61],
+ ['issues', 30],
+ ['sanders', 85],
+ ['like', 33],
+ ['let', 52],
+ ['know', 60],
+ ['president', 46],
+ ['believe', 38],
+ ['change', 13],
+ ['obama', 5],
+ ['every', 29],
+ ['applause', 82],
+ ['country', 93],
+ ['well', 38],
+ ['governor', 20],
+ ['american', 46],
+ ['time', 45],
+ ['senator', 32],
+ ['democratic', 22],
+ ['think', 97],
+ ['secretary', 23],
+ ['secretary clinton', 58],
+ ['senator sanders', 55],
+ ['wall street', 26],
+ ['president obama', 30],
+ ['climate change', 23],
+ ["governor o'malley", 33],
+ ['united states', 20],
+ ['democratic presidential', 17],
+ ['criminal justice', 11],
+ ['middle class', 12],
+ ['senator webb', 25],
+ ['clinton well', 27],
+ ['health care', 12],
+ ['juan carlos', 9],
+ ['social security', 12],
+ ['las vegas', 7],
+ ['make sure', 12],
+ ['governor chafee', 16],
+ ['presidential debate', 11],
+ ['lives matter', 9]];
+
+process(data);
+
+</script>
+
+</body>
