@@ -1,0 +1,130 @@
+
+<!DOCTYPE html>
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
+
+<style>
+
+body {
+  font-family: Arial;
+}
+
+#vis {
+  position: relative;
+}
+
+.cloudcontainer {
+  display: inline-block;
+  position: relative;
+  margin-left: 20px;
+}
+
+</style>
+
+<body>
+
+  <h2>TF-IDF on SOTU Speeched</h2>
+
+  <p>Scale shared across them - actually makes some of them not as interesting, but pops the real news?</p>
+
+
+  <div class="vis">
+  </div>
+
+<script src="//d3js.org/d3.v3.min.js"></script>
+<script src="http://d3js.org/queue.v1.min.js"></script>
+<script src="http://dimplejs.org/dist/dimple.v2.1.6.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/3.10.1/lodash.js"></script>
+<script src="js/d3.layout.cloud.js"></script>
+
+<script>
+
+var fontscale = d3.scale.linear()
+    .range([8, 60]);
+
+function make_wordcloud(data, column, selector, color) {
+
+  var layout = d3.layout.cloud()
+    .size([500, 500])
+    .words(data)
+    .rotate(0)
+    .font("Impact")
+    .spiral("rectangular")
+    .text(function(d) {
+      return d.word; })
+    .fontSize(function(d) {
+      return fontscale(d[column]); })
+    .on("end", draw);
+
+  function draw(words) {
+    d3.select(selector).append("svg")
+      .attr("width", layout.size()[0])
+      .attr("height", layout.size()[1])
+      .attr("class", "wordcloud")
+      .append("g")
+      // without the transform, words would get cutoff to the left and top, they would
+      // appear outside of the SVG area
+      .attr("transform", "translate(" + layout.size()[0] / 2 + "," + layout.size()[1] / 2 + ")")
+      .selectAll("word")
+      .data(words)
+      .enter().append("text")
+      .style("font-size", function(d) {
+        return fontscale(d[column]) + "px";
+      })
+      .style("font-family", "Impact")
+      .attr("fill", color)
+      .attr("text-anchor", "middle")
+      .attr("transform", function(d) {
+          return "translate(" + [d.x, d.y] + ")rotate(" + d.rotate + ")";
+      })
+      .text(function(d) {
+          return d.word; });
+  }
+
+  layout.start();
+}
+
+
+function process_data(data) {
+  var files = d3.keys(data);
+  return files;
+
+}
+
+
+function process(error, data1) {
+
+  if (error) { console.log("error", error); }
+
+  // it's way worse with all of them -- need to provide cutoffs in ui?
+  // config settings?  also, stopwords handling.
+
+  var files = process_data(data1);
+
+  var allvals = d3.merge(d3.values(data1));
+
+  fontscale
+    .domain(d3.extent(allvals, function (d) {
+          return d.tfidf;
+  }));
+
+  files.forEach(function(f, i) {
+    var id = "file" + i;
+
+    var dataslice = data1[f];
+    var data = dataslice.sort(function(a,b) {
+      return d3.descending(a.tfidf, b.tfidf);
+    }).slice(0,100);
+    var selector = d3.select(".vis").append("div").attr("id", id).attr("class", "cloudcontainer");
+    selector.append("h3").text(f);
+    make_wordcloud(data, "tfidf", "div#" + id, "steelblue");
+  });
+
+}
+
+queue()
+  .defer(d3.json, "data/tfidf_obama.json")
+  .await(process);
+
+</script>
+
+</body>

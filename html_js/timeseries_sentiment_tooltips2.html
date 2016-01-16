@@ -1,0 +1,178 @@
+
+<!DOCTYPE html>
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
+
+<link rel="stylesheet" type="text/css" href="css/tooltip.css">
+
+<style>
+
+body {
+  font-family: Arial;
+}
+
+svg {
+  padding: 10px 0 50px 20px;
+}
+
+.graphgroup {
+  margin-left: 20px;
+}
+
+.graphs {
+  display: inline-block;
+  position: relative;
+  margin-right: 20px;
+}
+
+.title {
+  display: inline-block;
+  position: relative;
+  padding-left: 150px;
+}
+
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+.x.axis path {
+  display: none;
+}
+
+p#pos {
+  color: blue;
+}
+
+p#neg {
+  color: red;
+}
+
+.line {
+  fill: none;
+  stroke-width: 1.5px;
+}
+
+.axis.line {
+  stroke: none;
+}
+
+
+#title1 {
+  color: red;
+  margin-left: 20px;
+}
+
+
+.zeroline {
+  stroke: #ccc;
+  stroke-width: 1px;
+}
+
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+circle.point {
+  fill: steelblue;
+  fill-opacity: 0.5;
+  stroke: #eee;
+}
+
+
+</style>
+
+<body>
+
+  <h2>Verbs by Sentiment Over Debates</h2>
+
+  <p>Draws simple lines with dimple.js.  Plotting Positive minus Negative sentiment words uttered in each grouping time period.
+
+   Words are in the tooltip now - unformatted.  Strange error with the end of the dataset - seems to be on dimple side? It should stop at index 124.</p>
+
+
+  <div class="titles">
+    <h2 class="title" id="title2">SOTU Net Sentiment</h2>
+  </div>
+  <div class="barsgroup">
+    <div class="bars" id="sent"></div>
+  </div>
+
+
+<script src="//d3js.org/d3.v3.min.js"></script>
+<script src="http://d3js.org/queue.v1.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/3.10.1/lodash.js"></script>
+<script src="js/tooltip.js"></script>
+<script src="js/reusable_line.js"></script>
+
+
+<script>
+
+var getTooltipHtml = function(d) {
+  var pos = (d.poswords.length > 0) ? d.poswords : ["None"];
+  var neg = (d.negwords.length > 0) ? d.negwords : ["None"];
+  return "<p id='pos'>Matching Positive:" + pos.join(', ') + "</p>" +
+    "<p id='neg'>Matching Negative:" + neg.join(', ') + "</p>";
+};
+
+function make_vis(data, selector, color) {
+
+  myline()
+    .$el(d3.select(selector))
+    .height(500) // Set height
+    .color(color) // Set color
+    .data(data) // Set data
+    .interpolation("monotone")
+    .xArg("index")
+    .yArg("netpos")
+    .tooltips(true)
+    .render();
+}
+
+
+function make_net_data(data) {
+
+  var newdata = [];
+
+  // apparently dimple wants long format!
+
+  data.forEach(function(d) {
+    list = d3.merge(d.poswords.concat(d.negwords));
+    string = list.join(', ')
+    newdata.push({
+        "index": +d.index,
+        "netpos" : +d.netpos,
+        "neg": +d.neg,
+        "pos": +d.pos,
+        "poswords": d.poswords,
+        "negwords": d.negwords,
+        "allwords": string
+    });
+
+  });
+  return newdata;
+}
+
+
+function process(error, data1, data2) {
+
+  console.log(data1);
+
+  if (error) { console.log("error", error); }
+
+  var data = make_net_data(data1);
+  make_vis(data, "#sent", "steelblue");
+
+}
+
+queue()
+  .defer(d3.json, "data/sentiment.json")
+  .await(process);
+
+</script>
+
+</body>
